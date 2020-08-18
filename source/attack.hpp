@@ -47,13 +47,18 @@ private:
     cv::Size m_winSize;
     cv::HOGDescriptor m_hog;
 
+    /**
+     * @name  图像预处理函数
+     * @param  _crop 图
+    */
     void m_preProcess(cv::Mat &_crop)
     {
+        /*检查图像窗口，若窗口比系统屏幕大,返回错误信息*/
         CV_Assert(_crop.cols >= m_winSize.width && _crop.rows >= m_winSize.height);
         if (_crop.rows > 64)
-            cv::resize(_crop, _crop, cv::Size2i(64, 64), cv::INTER_AREA);
+            cv::resize(_crop, _crop, cv::Size2i(64, 64), cv::INTER_AREA);//缩小图像
         else
-            cv::resize(_crop, _crop, cv::Size2i(64, 64), cv::INTER_CUBIC);
+            cv::resize(_crop, _crop, cv::Size2i(64, 64), cv::INTER_CUBIC);//放大图像
         cv::GaussianBlur(_crop, _crop, cv::Size(3, 3), -1);
     }
 
@@ -110,11 +115,13 @@ public:
         for (size_t i = 0; i < train_samples.size(); ++i)
         {
             CV_Assert(train_samples[i].cols == 1 || train_samples[i].rows == 1);
+            /*如果图像是一列，转置成一行，放入trainData中*/
             if (train_samples[i].cols == 1)
             {
                 transpose(train_samples[i], tmp);
                 tmp.copyTo(trainData.row((int)i));
             }
+            /*如果图像是一行，直接放入trainData中*/
             else if (train_samples[i].rows == 1)
             {
                 train_samples[i].copyTo(trainData.row((int)i));
