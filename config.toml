@@ -1,7 +1,7 @@
 
 [attack]
-    attack-color = 'red'
-#    attack-color = 'blue'
+#    attack-color =  'red'
+    attack-color = 'blue'
 
 # 弹道
 [curve]
@@ -26,8 +26,7 @@
 [cap]
     is-video = true   # true为打开视频或垃圾摄像头, false为打开摄像头
     is-mind  = false   # false为打开大华摄像头
-    video-path ="/home/truth/ClionProjects/RM/测试视频/t1.avi"   #视频路径或垃圾摄像头路径
-    #video-path = '/dev/video0'
+    video-path ="/home/chengyi/documents/zoo/attack2020-/全国赛part3.avi"   #视频路径或垃圾摄像头路径
     # 录视频
     record = false
 
@@ -35,7 +34,6 @@
 [auto]
     # 参数
     thread-num = 1                                 # 线程数量
-    is-mser = false                                 # 是否使用mser
     is-dilate = false                              # 是否膨胀
     classifier-path = '../data/rm520.xml'          # 分类器文件地址
     enable-predict = true
@@ -55,6 +53,7 @@
 x = -10.0     #5(24-27)  22(22.5-25)
 y = -345.0  #-300       -405
 z = 150.0   #150        150
+
 
 delay = 0.52#0.4 Great 0.34
 maxYawError = 0.6    #0.6

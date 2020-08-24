@@ -38,9 +38,10 @@ namespace armor{
     //3：工作模式（自瞄/风车）
     typedef enum{
         RM_AUTO_ATTACK = 0x11,
-        RM_WINDMILL_SMALL = 0x21,
-        RM_WINDMILL_CLOCK = 0x22,
-        RM_WINDMILL_ANTIC = 0x23
+        RM_WINDMILL_SMALL_CLOCK = 0x21,
+        RM_WINDMILL_SMALL_ANTIC = 0x22,
+        RM_WINDMILL_LARGE_CLOCK = 0x23,
+        RM_WINDMILL_LARGE_ANTIC=0x24
     } emWorkMode;
 
     /**
@@ -101,7 +102,7 @@ namespace armor{
 
         public:
         //构造函数
-        explicit Communicator(): m_isEnableReceiveGlobalAngle(true), m_WorkMode(RM_AUTO_ATTACK),//false
+        explicit Communicator(): m_isEnableReceiveGlobalAngle(false), m_WorkMode(RM_AUTO_ATTACK),
         m_letStop(false), m_isDisable(false), m_lastTick(cv::getTickCount()),
         m_currentInterval(-1110)
         {
@@ -140,12 +141,14 @@ namespace armor{
                 default:
                 case RM_AUTO_ATTACK:
                     return RM_AUTO_ATTACK;
-                case RM_WINDMILL_SMALL:
-                    return RM_WINDMILL_SMALL;
-                case RM_WINDMILL_CLOCK:
-                    return RM_WINDMILL_CLOCK;
-                case RM_WINDMILL_ANTIC:
-                    return RM_WINDMILL_ANTIC;
+                case RM_WINDMILL_SMALL_CLOCK:
+                    return RM_WINDMILL_SMALL_CLOCK;
+                case RM_WINDMILL_SMALL_ANTIC:
+                    return RM_WINDMILL_SMALL_ANTIC;
+                case RM_WINDMILL_LARGE_CLOCK:
+                    return RM_WINDMILL_LARGE_CLOCK;
+                case RM_WINDMILL_LARGE_ANTIC:
+                    return RM_WINDMILL_LARGE_ANTIC;
             }
         };
 
