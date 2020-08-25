@@ -32,33 +32,34 @@ if (!Boost_FOUND)
     message("-- Found Boost NOT FOUND")
 endif ()
 
-#======================== serial ==============================
-include_directories(/home/truth/opt/serial/include)
-#=================================================================
+set(serial_DIR /tmp/usr/local/share/serial/cmake/)
+find_package(serial)
+include_directories(${serial_INCLUDE_DIRS})
 
-#======================== 迈德威视 SDK ==============================
-include_directories(/home/truth/mindvision/include)
-#=================================================================
+include_directories(/home/chengyi/sdk/include)
+# include_directories(/opt/MVS/Samples_LinuxSDK/include)
+
 
 #======================== Dahua SDK ==============================
 include_directories(/opt/DahuaTech/MVviewer/include)
 link_libraries(/opt/DahuaTech/MVviewer/lib -lMVSDK)
-#=================================================================
 
+# set(LIB_THREAD_DIR /lib/x86_64-linux-gnu)
+# add_library(libpthread SHARED IMPORTED)
+# set_target_properties(libopencv_imgproc PROPERTIES IMPORTED_LOCATION ${LIB_THREAD_DIR}/libpthread.so.0)
 
+#/opt/DahuaTech/MVviewer/include
 include_directories(source include)
-
 add_executable(test main.cpp)
-
 target_link_libraries(test /opt/DahuaTech/MVviewer/lib/libMVSDK.so)
 target_link_libraries(test ${OpenCV_LIBS})
-
-target_link_libraries(test /home/truth/opt/serial/build/devel/lib/libserial.so)
+# target_link_libraries(test /home/youngxi/opt/mindvision/lib/x64/libMVSDK.so)
+#file(GLOB HikVision "/opt/MVS/Samples_LinuxSDK/lib/64/*.so")
+#target_link_libraries(attack ${HikVision})
 target_link_libraries(test ${serial_LIBRARIES})
 target_link_libraries(test ${Boost_LIBRARIES} usb-1.0)
-target_link_libraries(test /home/truth/ClionProjects/RM/sp/attack2020_tf/tensorflow/libtensorflow_cc.so
-                           /home/truth/ClionProjects/RM/sp/attack2020_tf/tensorflow/libtensorflow_framework.so.2)
-
+target_link_libraries(test /home/chengyi/documents/new/FOR_READING/tensorflow/libtensorflow_cc.so /home/chengyi/documents/new/FOR_READING/tensorflow/libtensorflow_framework.so.2)
+# target_link_libraries(test libpthread)
 
 # FIND_PACKAGE(OpenMP REQUIRED)
 # if (OPENMP_FOUND)

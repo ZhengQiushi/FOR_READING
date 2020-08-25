@@ -94,9 +94,9 @@ int main()
             /* 风车实例化 */
             wm::Windmill *pWindMill =
                     wm::Windmill::GetInstance(armor::stCamera.camMat, armor::stCamera.distCoeffs, TvCtoL, delay, "../rmdl/models/symbol.onnx", &isClient,maxPitchError,maxYawError);
-//            pWindMill->thre = tn::stupid::fixed_thre = tn::windmill::fixed_thre = armor::stConfig.get<int>("power.thre");
-//            pWindMill->close = armor::stConfig.get<bool>("power.close");
-//            tn::init();
+            /*pWindMill->thre = tn::stupid::fixed_thre = tn::windmill::fixed_thre = armor::stConfig.get<int>("power.thre");
+            pWindMill->close = armor::stConfig.get<bool>("power.close");
+            tn::init();*/
 
             int64_t timeStamp = 0;
             cv::Mat frame;
@@ -123,36 +123,45 @@ int main()
 //                    communicator.getGlobalAngle(&gYaw, &gPitch);
                     /* core code */
                     auto mode = communicator.getWorkMode();
-                    //auto mode =  armor::RM_WINDMILL_CLOCK;
+                    //auto mode =  armor::RM_WINDMILL_SMALL_CLOCK;
                     isClient.addText(cv::format("mode: %x", int(mode)));
 
                     switch (mode) {
-                        case armor::RM_WINDMILL_SMALL:
-                        case armor::RM_WINDMILL_CLOCK:
-                        case armor::RM_WINDMILL_ANTIC:
+                        case armor::RM_WINDMILL_SMALL_CLOCK:
+                        case armor::RM_WINDMILL_SMALL_ANTIC:
+                        case armor::RM_WINDMILL_LARGE_CLOCK:
+                        case armor::RM_WINDMILL_LARGE_ANTIC:
                             // 指定运行线程
                             if (i == 0) {
                                 /* 大风车 */
                                 float pitch = 0.0;
                                 float yaw = 0.0;
                                 switch (mode) {
-                                    case armor::RM_WINDMILL_SMALL:
-                                        isClient.addText("RM_WINDMILL_SMALL");
-                                        pWindMill->delay = 0.0;
-                                        pWindMill->maxPitchError = 0.0;
-                                        pWindMill->maxYawError = 0.0;
-                                        break;
-                                    case armor::RM_WINDMILL_CLOCK:
-                                        isClient.addText("RM_WINDMILL_CLOCK");
+                                    case armor::RM_WINDMILL_SMALL_CLOCK:
+                                        isClient.addText("RM_WINDMILL_SMALL_CLOCK");
                                         pWindMill->delay = delay;
+                                        pWindMill->maxPitchError = maxPitchError;
+                                        pWindMill->maxYawError = maxYawError;
+                                        pWindMill->mode="linear";
+                                        break;
+                                    case armor::RM_WINDMILL_SMALL_ANTIC:
+                                        isClient.addText("RM_WINDMILL_SMALL_ANTIC");
+                                        pWindMill->delay = -delay;
+                                        pWindMill->maxPitchError = -maxPitchError;
+                                        pWindMill->maxYawError = -maxYawError;
+                                        pWindMill->mode="linear";
+                                        break;
+                                    case armor::RM_WINDMILL_LARGE_CLOCK:
+                                        isClient.addText("RM_WINDMILL_CLOCK");
                                         pWindMill->maxPitchError =  maxPitchError;
                                         pWindMill->maxYawError =   maxYawError;
+                                        pWindMill->mode="triangular";
                                         break;
-                                    case armor::RM_WINDMILL_ANTIC:
+                                    case armor::RM_WINDMILL_LARGE_ANTIC:
                                         isClient.addText("RM_WINDMILL_ANTIC");
-                                        pWindMill->delay = - delay;
                                         pWindMill->maxPitchError = - maxPitchError;
                                         pWindMill->maxYawError = -  maxYawError;
+                                        pWindMill->mode="triangular";
                                         break;
                                 }
 
