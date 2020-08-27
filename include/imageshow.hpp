@@ -202,8 +202,7 @@ namespace armor {
             int thickness = 1;
             m_putMarginText(txt, cv::Scalar(70, 123, 255), thickness, false);
         }
-
-        /**
+         /**
          * 绘制旋转矩形
          */
         void addRotatedRects(const cv::String &eventName, const std::vector<cv::RotatedRect> &rRects) {
@@ -222,7 +221,6 @@ namespace armor {
         void addEvent(const cv::String &eventName, const std::vector<cv::RotatedRect> &rRects) {
             addRotatedRects(eventName, rRects);
         }
-
         /**
          * 绘制矩形
          */
@@ -247,6 +245,20 @@ namespace armor {
 
         void addEvent(const cv::String &eventName, const cv::Rect &rect) {
             addRect(eventName, rect);
+        }
+
+        void addCircle(const cv::String &eventName, const cv::Point &p) {
+            if (s_mode == 0 || s_mode == 1)
+                return;
+            cv::Scalar currentColor = m_getCurrentColor();
+            int thickness = 1;
+            cv::circle(m_frame,p,10,currentColor,-1);
+            m_putMarginText(eventName, currentColor, thickness);
+
+        }
+
+        void addEvent(const cv::String &eventName, const cv::Point &p) {
+            addCircle(eventName, p);
         }
 
         /**
@@ -382,7 +394,6 @@ namespace armor {
             }
             for (const auto &pts : region2) {
                 cv::convexHull(pts, hull, true);
-                // nowColor[2] = ((int)(nowColor[2] + 5)) % 255;
                 polylines(m_frame, hull, true, currentColor, thickness);
             }
             m_putMarginText(eventName + cv::format(": %d", int(region.size())), currentColor, thickness);
@@ -425,7 +436,11 @@ namespace armor {
                         cv::FONT_HERSHEY_PLAIN, s_fontSize, currentColor);
             m_putMarginText(eventName, currentColor, thickness);
         }
-
+        /**
+         * 绘制预测目标
+         * @param eventName 事件名, 显示在左上角
+         * @param targets 绘制对象
+         */
         void addPredictTarget(const cv::String &eventName, armor::Target &target) {
             if (s_mode == 0)
                 return;
@@ -442,8 +457,6 @@ namespace armor {
             cv::projectPoints(objpt, target.rv, target.tv, stCamera.camMat, stCamera.distCoeffs, imgpt);
             int length = 300;
             cv::Point2f offset = cv::Point2f(stFrameInfo.offset);
-//            cv::line(m_frame, imgpt[0] - cv::Point2f(length, 0) - offset,
-//                     imgpt[0] + cv::Point2f(length, 0) - offset, currentColor, thickness);
             cv::line(m_frame, imgpt[0] - cv::Point2f(0, length) - offset,
                      imgpt[0] + cv::Point2f(0, length) - offset, currentColor,
                      thickness);
@@ -471,7 +484,7 @@ namespace armor {
             cv::Mat tempImg;
             img.copyTo(tempImg);
             if (i == size) {
-                // 新的窗口
+                /* 新窗口 */
                 ImageData imgData;
                 imgData.name = winName;
                 imgData.mat = tempImg;
@@ -479,7 +492,7 @@ namespace armor {
                 std::lock_guard<std::mutex> lock(s_semaphore.mutex);
                 s_imgVec[m_id].emplace_back(imgData);
             } else {
-                // 旧窗口
+                /* 旧窗口 */
                 std::lock_guard<std::mutex> lock(s_semaphore.mutex);
                 s_imgVec[m_id][i].mat = tempImg;
                 s_imgVec[m_id][i].isUpdated = true;
@@ -644,13 +657,21 @@ namespace armor {
             m_winProps.winBorderSize = winBorderSize;
             m_winProps.offset = m_winProps.startOffset = m_winProps.currentLocation = offset;
         }
-
+        /**
+         * 设置字体
+         */
         void setFontSize(double size) { s_fontSize.exchange(size); }
-
+        /**
+         * 设置显示模式
+         */
         void setMode(int mode) { s_mode.exchange(mode); }
-
+        /**
+         * 设置是否输出clock的计时
+         */
         void enableClockPrint(bool enable = true) { s_isClockPrintEnable.exchange(enable); }
-
+        /**
+         * 设置是否输出cpu平均耗时
+         */
         void enableAverageCostPrint(bool enable = true) { s_isAverageCostPrint.exchange(enable); }
 
         /**
@@ -665,7 +686,7 @@ namespace armor {
 
         /**
          * 是否将要退出图像显示
-         * @return
+         * @return true/false
          */
         bool isWillExit() { return m_isWillExit.load(); }
 
@@ -681,10 +702,12 @@ namespace armor {
 
         /**
          * 当前窗口是否暂停刷新
-         * @return
+         * @return true/false
          */
         bool isPause() { return s_isPause.load(); }
-
+        /**
+         * 进行图像显示
+         */
         void mainloop() {
             if (s_mode == 0) {
                 PRINT_INFO("[is Server] mode = 0 quit\n");
@@ -700,17 +723,14 @@ namespace armor {
                         cv::setMouseCallback("main", [](int event, int x, int y, int flags, void *ustc) {
                             cv::Mat frame = *(cv::Mat *) ustc;
                             cv::Point p(x, y);
-//                            cv::Mat hsv;
-//                            cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
-                            if (event == cv::EVENT_LBUTTONDOWN) {   // 左键按下
+                            /* 按下左键 */
+                            if (event == cv::EVENT_LBUTTONDOWN) {   
                                 PRINT_WARN("b: %d, g: %d, r: %d \n", frame.at<cv::Vec3b>(p)[0],
                                            frame.at<cv::Vec3b>(p)[1], frame.at<cv::Vec3b>(p)[2]);
-//                                PRINT_WARN("h: %d, s: %d, v: %d\n", hsv.at<cv::Vec3b>(p)[0], hsv.at<cv::Vec3b>(p)[1],
-//                                           hsv.at<cv::Vec3b>(p)[2]);
                             }
                         }, &s_frameVec[s_currentCallID].second);
                     }
-                    // 主图
+                    /* 显示主图 */
                     DEBUG("show main")
                     cv::imshow("main", s_frameVec[id].second);
                     DEBUG("show img")
@@ -729,7 +749,8 @@ namespace armor {
                         }
                     }
                     DEBUG("show end")
-                })) {
+                })) 
+                {
                     PRINT_ERROR("[isServer] mainloop timeout\n");
                     break;
                 }
