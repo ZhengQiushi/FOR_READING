@@ -202,8 +202,7 @@ namespace armor {
             int thickness = 1;
             m_putMarginText(txt, cv::Scalar(70, 123, 255), thickness, false);
         }
-
-        /**
+         /**
          * 绘制旋转矩形
          */
         void addRotatedRects(const cv::String &eventName, const std::vector<cv::RotatedRect> &rRects) {
@@ -222,7 +221,6 @@ namespace armor {
         void addEvent(const cv::String &eventName, const std::vector<cv::RotatedRect> &rRects) {
             addRotatedRects(eventName, rRects);
         }
-
         /**
          * 绘制矩形
          */
@@ -247,6 +245,20 @@ namespace armor {
 
         void addEvent(const cv::String &eventName, const cv::Rect &rect) {
             addRect(eventName, rect);
+        }
+
+        void addCircle(const cv::String &eventName, const cv::Point &p) {
+            if (s_mode == 0 || s_mode == 1)
+                return;
+            cv::Scalar currentColor = m_getCurrentColor();
+            int thickness = 1;
+            cv::circle(m_frame,p,10,currentColor,-1);
+            m_putMarginText(eventName, currentColor, thickness);
+
+        }
+
+        void addEvent(const cv::String &eventName, const cv::Point &p) {
+            addCircle(eventName, p);
         }
 
         /**
