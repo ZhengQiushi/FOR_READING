@@ -729,7 +729,8 @@ namespace armor {
                         }
                     }
                     DEBUG("show end")
-                })) {
+                })) 
+                {
                     PRINT_ERROR("[isServer] mainloop timeout\n");
                     break;
                 }

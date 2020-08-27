@@ -95,7 +95,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
 
 /**
      * 析构函数
-     * join所用线程
+     * join所有线程
      */
 inline ThreadPool::~ThreadPool()
 {
