@@ -136,7 +136,7 @@ namespace armor
                 cv::Point2f pts[4];
 
                 rRect.points(pts);
-                if (rRect.size.width > rRect.size.height)
+                if (rRect.size.width > rRect.size.height)//根据外接矩形的特性需调整点
                 {
                     bottomPt = (pts[2] + pts[3]) / 2.0;
                     topPt = (pts[0] + pts[1]) / 2.0;
