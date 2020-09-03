@@ -11,6 +11,8 @@
 #include <functional>
 #include <stdexcept>
 
+/*作为封装库直接使用*/
+
 class ThreadPool {
 public:
     ThreadPool(size_t);
