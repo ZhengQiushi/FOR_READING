@@ -124,7 +124,7 @@ namespace wm {
         armor::ImageShowClient *is;
     };
 
-    //问题：必须拿到风车匀速转动代码进行调试！
+    //问题：必须拿到风车匀速转动代码进行调试！（新风车已经给出了转速函数，因此不需要再过多到依赖于历史列表，只需要确保获得准确风车已经运行时间到时间以及弹丸飞行到时间即可准确预测）
     void Windmill::generate_list(float angle)//generate angle list and time stamp list
 		{
 			if(angle_list.empty())
@@ -260,7 +260,7 @@ namespace wm {
         is->addText(cv::format("z: %d",int(z)));
         //std::cout<<"z:"<<int(tVec.ptr<double>(2)[0])<<endl;
     }
-    void Windmill::find_armor(cv::RotatedRect Rrect,cv::Point& armor,float& angle,float& length,cv::Point windmill_c)//find the target armor after prediction
+    void Windmill::find_armor(cv::RotatedRect Rrect,cv::Point& armor,float& angle,float& length,cv::Point windmill_c)//find the target armor after prediction 利用极坐标，给定预测角度来获得预测后到装甲板中心坐标
     {
         int dis_x=Rrect.center.x-windmill_c.x;
         int dis_y=Rrect.center.y-windmill_c.y;
@@ -307,7 +307,7 @@ namespace wm {
         armor.y=int(length*1.45*sin(angle)+windmill_c.y);
         is->addText(cv::format("armor.y: %d",armor.y));
     }
-    bool Windmill::find_light(std::vector<std::vector<cv::Point>> contours,cv::RotatedRect& right,std::vector<cv::Vec4i> hierarchy,cv::Point windmill_c)//find target flow bar
+    bool Windmill::find_light(std::vector<std::vector<cv::Point>> contours,cv::RotatedRect& right,std::vector<cv::Vec4i> hierarchy,cv::Point windmill_c)//find target flow bar 不可用，新规灯条形状未变，后续再改
     {
         int match=-1;
         int distance=999999999;
@@ -338,7 +338,7 @@ namespace wm {
         return false;
     }
 
-    cv::Mat Windmill::threshold(cv::Mat frame)//threshold
+    cv::Mat Windmill::threshold(cv::Mat frame)//threshold颜色二值化，红色两段范围两个mask相加提高精度
     {
         cv::Mat hsv,gray,mask0,mask1;
         std::vector<cv::Mat> hsvsplit;
@@ -362,7 +362,7 @@ namespace wm {
         //cv::imwrite("../gray.jpg",gray);
         return gray;
     }
-    void Windmill::pre_process(cv::Mat& gray)//dilate & morphologyEx
+    void Windmill::pre_process(cv::Mat& gray)//dilate & morphologyEx 膨胀腐蚀是否使用待定
     {
         cv::Mat element1 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
         cv::Mat element2 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
@@ -381,14 +381,14 @@ namespace wm {
 				cv::Mat fake_mat(blank.rows, blank.cols, CV_32FC(blank.channels()), tensor_data_ptr);
 				blank.convertTo(fake_mat, CV_32FC(blank.channels()));
     }
-    bool Windmill::find_center(cv::Point& windmill_c,std::vector<std::vector<cv::Point>> contours,int i,cv::Mat thre)//find windmill center
+    bool Windmill::find_center(cv::Point& windmill_c,std::vector<std::vector<cv::Point>> contours,int i,cv::Mat thre)//find windmill center 由于相机在云台上，风车圆心在移动，为了准确预测需要重复定位风车的中心
     {
         cv::Rect rect;
         if (contours[i].size() < 5)
             return false;
         rect=cv::boundingRect(contours[i]);
         //is->addRect("find rect",rect);
-        if (float(rect.height) / rect.width < 1.4 && float(rect.width) / rect.height < 1.4 && rect.area() < 2800 && rect.area() > 500)
+        if (float(rect.height) / rect.width < 1.4 && float(rect.width) / rect.height < 1.4 && rect.area() < 2800 && rect.area() > 500)//该写法泛化能力较差，是针对视频而言，需要进一步修改
         {
             double m=-1;
             float result_predict =-1;

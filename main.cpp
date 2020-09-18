@@ -13,7 +13,7 @@ int main()
 {
     std::cout << "Using OpenCV " << CV_VERSION << std::endl;
 
-    int threadNum = armor::stConfig.get<int>("auto.thread-num");
+    int threadNum = armor::stConfig.get<int>("auto.thread-num");//线程数初始化
 
     /* 通信 */
 #ifdef USE_USB
@@ -34,7 +34,7 @@ int main()
 
     armor::DaHuaVision dahuaVision;
 
-    if (armor::stConfig.get<bool>("cap.is-video")){
+    if (armor::stConfig.get<bool>("cap.is-video")){//打开视频或者垃圾摄像头
         cap = &lajiVision;
     }
     // else if(armor::stConfig.get<bool>("cap.is-mind"))
@@ -42,7 +42,7 @@ int main()
     //     cap = &mindVision;
     // }
     else{
-        cap = &dahuaVision;
+        cap = &dahuaVision;//打开大华摄像头
     }
 
     cap->init(); // 初始化
@@ -58,7 +58,7 @@ int main()
 
     /* 开图像显示辅助程序 */
     armor::ImageShowServer isServer(threadNum, 0.5);
-    isServer.setMode(armor::stConfig.get<int>("isServer.mode"));
+    isServer.setMode(armor::stConfig.get<int>("isServer.mode"));//配置模式，三种，具体看配置文件
     isServer.setFontSize(1.25);
     isServer.enableClockPrint(true);
     isServer.enableAverageCostPrint(true);
@@ -71,16 +71,16 @@ int main()
              armor::stConfig.get<double>("auto.ki"),
              armor::stConfig.get<double>("auto.kd"));
 
-    for (int i = 0; i < threadNum; ++i) {
+    for (int i = 0; i < threadNum; ++i) {//首先每个线程都会对attack、windmill进行初始化，之后会根据循环中i的值来为不同到线程分配不同到击打任务（自瞄或者风车击打）
         attackThreads[i] = std::thread([cap, &isServer, i, &communicator, &pid]() {
             armor::ImageShowClient isClient = isServer.getClient(i);
 
             /* 初始化 attack */
 
             armor::Attack attack(communicator, pid, isClient);
-            attack.enablePredict(armor::stConfig.get<bool>("auto.enable-predict"));
+            attack.enablePredict(armor::stConfig.get<bool>("auto.enable-predict"));//是否进行预测
 
-            attack.setMode(armor::stConfig.get<std::string>("attack.attack-color") == "red");
+            attack.setMode(armor::stConfig.get<std::string>("attack.attack-color") == "red");//击打颜色为红色，具体见配置文件
 
             /* 初始化 windmill */
             cv::Mat TvCtoL = (cv::Mat_<double>(3, 1) << armor::stConfig.get<double>("power.x"), armor::stConfig.get<double>("power.y"), armor::stConfig.get<double>("power.z"));  //摄像头到云台转化矩阵
@@ -132,11 +132,11 @@ int main()
                         case armor::RM_WINDMILL_LARGE_CLOCK:
                         case armor::RM_WINDMILL_LARGE_ANTIC:
                             // 指定运行线程
-                            if (i == 0) {
+                            if (i == 0) {//i=0的线程跑风车
                                 /* 大风车 */
                                 float pitch = 0.0;
                                 float yaw = 0.0;
-                                switch (mode) {
+                                switch (mode) {//选择模式初始化参数（这是旧版，最新版未更新）
                                     case armor::RM_WINDMILL_SMALL_CLOCK:
                                         isClient.addText("RM_WINDMILL_SMALL_CLOCK");
                                         pWindMill->delay = delay;
@@ -167,14 +167,14 @@ int main()
 
 
 
-                                if (pWindMill->run(frame, pitch, yaw, (double) cv::getTickCount())) {
+                                if (pWindMill->run(frame, pitch, yaw, (double) cv::getTickCount())) {//有目标，运行风车击打
                                     communicator.send(0.0, 0.0,
                                                       armor::SEND_STATUS_WM_AIM, armor::SEND_STATUS_WM_FIND);
                                     isClient.addText(cv::format("send pitch:%0.2f", pitch));
                                     isClient.addText(cv::format("send yaw:%0.2f", yaw));
 
 
-                                } else {
+                                } else {//无目标
                                     communicator.send(0.0, 0.0,
                                                       armor::SEND_STATUS_WM_AIM, armor::SEND_STATUS_WM_NO);
                                     PRINT_WARN("[windmill] no target find\n");
@@ -186,7 +186,7 @@ int main()
                                 isClient.show();
                             }
                             break;
-                        case armor::RM_AUTO_ATTACK:
+                        case armor::RM_AUTO_ATTACK://跑自瞄
                             if (attack.run(frame, timeStamp, gYaw, gPitch))
                                 /* 通知主线程显示图像, 有时候这一帧放弃的话就不显示了 */
                                 isClient.show();
