@@ -1,5 +1,6 @@
 //
 //created by 刘雍熙 on 2020-02-01
+//添加注释 by 王嘉豪 on 2020-09-18
 //
 
 #ifndef COMMUNICATE_HPP
@@ -37,11 +38,11 @@ namespace armor{
     } emSendStatusB;
     //3：工作模式（自瞄/风车）
     typedef enum{
-        RM_AUTO_ATTACK = 0x11,
-        RM_WINDMILL_SMALL_CLOCK = 0x21,
-        RM_WINDMILL_SMALL_ANTIC = 0x22,
-        RM_WINDMILL_LARGE_CLOCK = 0x23,
-        RM_WINDMILL_LARGE_ANTIC=0x24
+        RM_AUTO_ATTACK = 0x11,               //自瞄模式
+        RM_WINDMILL_SMALL_CLOCK = 0x21,      //小符击打顺时针
+        RM_WINDMILL_SMALL_ANTIC = 0x22,      //小符击打逆时针
+        RM_WINDMILL_LARGE_CLOCK = 0x23,      //大符击打顺时针
+        RM_WINDMILL_LARGE_ANTIC=0x24         //大符击打逆时针
     } emWorkMode;
 
     /**
@@ -49,45 +50,49 @@ namespace armor{
      */
     class Communicator{
         protected:
-//为整个包减少空字符使用pragma
-#pragma pack(1)
-        //头帧 时间戳 yaw pitch 标识符 校验 尾帧
+/*为整个包减少空字符使用pragma*/
+#pragma pack(1)                        //指定数据类型的内存对齐系数为 1
         struct __FrameSt
         {
-            uint8_t head = 0xf1;
-            uint16_t timeStamp = 0;
+            uint8_t head = 0xf1;       //头帧
+            uint16_t timeStamp = 0;    //时间戳
             float yaw = 0.0;
             float pitch = 0.0;
-            uint8_t extra[2] = {0, 0}; // additional imformation
-            uint8_t crc8check = 0;
-            uint8_t end = 0xf2;
+            uint8_t extra[2] = {0, 0}; //额外信息（标识符）
+            uint8_t crc8check = 0;     //校验
+            uint8_t end = 0xf2;        //尾帧
         } m_frame;
-#pragma pack()
+#pragma pack()                         //取消自定义的字节对齐方式
 
-        //crc校验用
+        /*crc校验用
+         *
+        CRC校验可以运用于传输数据过程中的验证，发送端发送有效数据时，先根据有效数据和生成多项式计算出CRC校验码，把CRC校验码加到有效数据后面一起发送；当接收数据时，取出前面有效数据部分，用同样生成多项式计算出CRC校验码，然后取出接收数据后面CRC校验码部分，对比两个校验码是否相同
+         */
         static uint8_t m_calcCRC8(const uint8_t *buff, size_t len) {
-            uint8_t ucIndex, ucCRC8 = (uint8_t) CRC8_INIT;
+            uint8_t ucIndex, ucCRC8 = (uint8_t) CRC8_INIT;      //CRC8_INIT 在crc_table.hpp中  初始化ucCRC8=0xff
             while (len--) {
-                ucIndex = ucCRC8 ^ (*buff++);
+                ucIndex = ucCRC8 ^ (*buff++);     //异或校验
                 ucCRC8 = CRC8_Table[ucIndex];
             }
-            return (ucCRC8);
+            return (ucCRC8);   //最后返回校验后的校验码（ucCRC8）
         }
 
-        const size_t m_frameSize = sizeof(__FrameSt);
+        const size_t m_frameSize = sizeof(__FrameSt);     //定义frame的size
 
-        //包校验
+        /*包校验*/
         bool m_checkFrame(const uint8_t *buff) {
-            if (buff[0] == m_frame.head && buff[m_frameSize - 1] == m_frame.end) {
-                return buff[m_frameSize - 2] == m_calcCRC8(buff, m_frameSize - 2);
+            if (buff[0] == m_frame.head && buff[m_frameSize - 1] == m_frame.end)  //校验头帧和尾帧是否相同，如果相同，则进入判断语句内部
+            {
+                return buff[m_frameSize - 2] == m_calcCRC8(buff, m_frameSize - 2); //再次校验
+                
             }
             return false;
         }
 
-        //多线程用
-        std::mutex m_mutex;
+        /*多线程用*/
+        std::mutex m_mutex;           //互斥量  0代表解锁，线程或进程可以访问临界区
 
-        std::atomic_bool m_isEnableReceiveGlobalAngle;
+        std::atomic_bool m_isEnableReceiveGlobalAngle;   //std::atomic为C++11封装的原子数据类型  接受全局欧拉角使能
         std::atomic_int m_WorkMode;   // 当前工作模式: 摸鱼, 自瞄, 大风车
         std::deque<float> m_gYaws;
         std::deque<float> m_gPitches;
@@ -97,11 +102,11 @@ namespace armor{
 
         std::atomic_bool m_isDisable; // 是否使能
 
-        std::atomic<int64> m_lastTick;
-        std::atomic<int64> m_currentInterval;
+        std::atomic<int64> m_lastTick;   //计时
+        std::atomic<int64> m_currentInterval;   //当前图像时间间隔
 
         public:
-        //构造函数
+        //构造函数 初始化成员变量
         explicit Communicator(): m_isEnableReceiveGlobalAngle(false), m_WorkMode(RM_AUTO_ATTACK),
         m_letStop(false), m_isDisable(false), m_lastTick(cv::getTickCount()),
         m_currentInterval(-1110)
@@ -168,7 +173,7 @@ namespace armor{
          */
         void getGlobalAngle(float *gYaw, float *gPitch, uint8_t delay = 0) {
             if (m_isEnableReceiveGlobalAngle) {
-                std::lock_guard<std::mutex> lockGuard(m_mutex);
+                std::lock_guard<std::mutex> lockGuard(m_mutex);   //避免出现死锁
                 *gYaw = m_gYaws[delay];
                 *gPitch = m_gPitches[delay];
             } else {
@@ -202,7 +207,7 @@ namespace armor{
      */
     class CommunicatorSerial : public Communicator {
     private:
-        serial::Serial m_ser;
+        serial::Serial m_ser;   //串口
 
     public:
         explicit CommunicatorSerial() = default;
@@ -212,23 +217,25 @@ namespace armor{
          * @param portName
          * @param baudrate
          */
-        void open(const cv::String &portName, uint32_t baudrate = 115200) {
+        void open(const cv::String &portName, uint32_t baudrate = 115200)//传入端口名和波特率（调制速度）
+        {
             if (m_isDisable.load()) return;
             m_ser.setPort(portName);
             m_ser.setBaudrate(baudrate);
 
             /* 守护线程 */
             int openSerialCounter = 0;
-            while (!m_ser.isOpen() && !m_letStop.load()) {
-                PRINT_WARN("[serial] try open %d\n", openSerialCounter++);
+            while (!m_ser.isOpen() && !m_letStop.load()) //如果串口没开and没让停
+            {
+                PRINT_WARN("[serial] try open %d\n", openSerialCounter++);  //警告：尝试打开+打开线程次数
                 try {
                     m_ser.open();
                 } catch (serial::IOException &e) {
-                    PRINT_ERROR("[serial] error: %s\n", e.what());
+                    PRINT_ERROR("[serial] error: %s\n", e.what());  //报错
                 }
                 /* 转移时间片 */
                 armor::thread_sleep_ms(100);
-                if (openSerialCounter > 10) break;
+                if (openSerialCounter > 10) break;   //设置尝试 10 次
             }
             if (m_ser.isOpen()) PRINT_INFO("[serial] open\n");
             else exit(-666);
@@ -238,7 +245,7 @@ namespace armor{
             if (m_isDisable.load()) return;
             if (!m_ser.isOpen()) return;
             /* 刷新结构体 */
-            if (m_frame.timeStamp > 0xfffe) m_frame.timeStamp = 0;
+            if (m_frame.timeStamp > 0xfffe) m_frame.timeStamp = 0;  //刷新时间戳
             m_frame.timeStamp++;
             m_frame.yaw = rYaw;
             m_frame.pitch = rPitch;
@@ -253,7 +260,7 @@ namespace armor{
 
                 /* 组织字节 */
                 uint8_t msg[m_frameSize];
-                memcpy(msg, &m_frame, m_frameSize);
+                memcpy(msg, &m_frame, m_frameSize);   //将m_frame中的前m_frameSize个字节拷贝进msg
                 msg[m_frameSize - 2] = m_calcCRC8(msg, m_frameSize - 2);
 
                 /* 发送 */
@@ -269,7 +276,7 @@ namespace armor{
                 while (!m_ser.isOpen() && !m_letStop.load()) { armor::thread_sleep_us(200); }
                 std::vector<uint8_t> buffer;
                 while (!m_letStop.load()) {
-                    size_t size_temp = m_ser.available();
+                    size_t size_temp = m_ser.available();    //串口数
                     if (size_temp > 0) {
                         /* 读值 */
                         std::vector<uint8_t> buffer_tmp;
