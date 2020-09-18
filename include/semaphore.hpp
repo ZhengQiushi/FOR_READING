@@ -39,27 +39,6 @@ namespace armor {
 
         explicit Semaphore() : m_isWakeUp(false), m_isWillExit(false) {}
         /**
-         * 该函数未被调用
-         */
-        void wait(const std::function<void()> &func) {
-            std::unique_lock<std::mutex> lock(mutex);
-            m_condVar.wait(lock,
-                           [&]() -> bool { return m_isWakeUp.load() || m_isWillExit.load(); });
-            func();
-            lock.unlock();
-            m_isWakeUp.exchange(false);
-        }
-        /**
-         * 该函数未被调用
-         */
-        void wait() {
-            std::unique_lock<std::mutex> lock(mutex);
-            m_condVar.wait(lock,
-                           [&]() -> bool { return m_isWakeUp.load() || m_isWillExit.load(); });
-            lock.unlock();
-            m_isWakeUp.exchange(false);
-        }
-        /**
          * 在tiemout指定的时间内若被唤醒或将退出则执行func
          * @param timeout 等候时间
          * @param func 判别函数
@@ -117,7 +96,9 @@ namespace armor {
             m_isWakeUp.exchange(true);
             m_condVar.notify_one();
         };
-
+        /**
+         * 退出
+         */
         void quit() {
             m_isWillExit.exchange(true);
             m_condVar.notify_all();
